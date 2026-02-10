@@ -169,7 +169,7 @@ static void DrawLevelBar(uint8_t xpos, uint8_t line, uint8_t level, uint8_t bars
 
 #endif
 
-void DisplayRSSIBar(const int16_t rssi, const uint8_t vfo_num, const uint8_t line, const uint8_t rssi_x)
+void DisplayRSSIBar(bool now)
 {
 #if defined(ENABLE_RSSI_BAR)
 
