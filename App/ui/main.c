@@ -114,6 +114,7 @@ static void DrawLevelBar(uint8_t xpos, uint8_t line, uint8_t level, uint8_t bars
 #ifdef ENABLE_FEAT_F4HWN
         if(gSetting_set_met)
         {
+            // Remplaced Tiny by Losehu Style
             const char hollowBar[] = {
                 0b01111111,
                 0b01000001,
@@ -121,7 +122,7 @@ static void DrawLevelBar(uint8_t xpos, uint8_t line, uint8_t level, uint8_t bars
                 0b01111111
             };
 
-            if(i < bars - 4) {
+            if(i < MIN(9, bars)) {
                 for(uint8_t j = 0; j < 4; j++)
                     p_line[xpos + i * 5 + j] = (~(0x7F >> (i + 1))) & 0x7F;
             }
@@ -131,6 +132,7 @@ static void DrawLevelBar(uint8_t xpos, uint8_t line, uint8_t level, uint8_t bars
         }
         else
         {
+            // Original Classic Style
             const char hollowBar[] = {
                 0b00111110,
                 0b00100010,
@@ -153,6 +155,7 @@ static void DrawLevelBar(uint8_t xpos, uint8_t line, uint8_t level, uint8_t bars
             }
         }
 #else
+        // 非ENABLE_FEAT_F4HWN情况保持原有逻辑
         if(i < bars - 4) {
             for(uint8_t j = 0; j < 4; j++)
                 p_line[xpos + i * 5 + j] = (~(0x7F >> (i+1))) & 0x7F;
@@ -163,83 +166,10 @@ static void DrawLevelBar(uint8_t xpos, uint8_t line, uint8_t level, uint8_t bars
 #endif
     }
 }
+
 #endif
 
-#ifdef ENABLE_AUDIO_BAR
-
-// Approximation of a logarithmic scale using integer arithmetic
-uint8_t log2_approx(unsigned int value) {
-    uint8_t log = 0;
-    while (value >>= 1) {
-        log++;
-    }
-    return log;
-}
-
-void UI_DisplayAudioBar(void)
-{
-    if (gSetting_mic_bar)
-    {
-        if(gLowBattery && !gLowBatteryConfirmed)
-            return;
-
-#ifdef ENABLE_FEAT_F4HWN
-        RxBlinkLed = 0;
-        RxBlinkLedCounter = 0;
-        BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2_GREEN, false);
-        unsigned int line;
-        if (isMainOnly())
-        {
-            line = 5;
-        }
-        else
-        {
-            line = 3;
-        }
-#else
-        const unsigned int line = 3;
-#endif
-
-        if (gCurrentFunction != FUNCTION_TRANSMIT ||
-            gScreenToDisplay != DISPLAY_MAIN
-#ifdef ENABLE_DTMF_CALLING
-            || gDTMF_CallState != DTMF_CALL_STATE_NONE
-#endif
-            )
-        {
-            return;  // screen is in use
-        }
-
-#if defined(ENABLE_ALARM) || defined(ENABLE_TX1750)
-        if (gAlarmState != ALARM_STATE_OFF)
-            return;
-#endif
-        static uint8_t barsOld = 0;
-        const uint8_t thresold = 18; // arbitrary thresold
-        //const uint8_t barsList[] = {0, 0, 0, 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25, 25};
-        const uint8_t barsList[] = {0, 0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 21, 25, 25, 25};
-        uint8_t logLevel;
-        uint8_t bars;
-
-        unsigned int voiceLevel  = BK4819_GetVoiceAmplitudeOut();  // 15:0
-
-        voiceLevel = (voiceLevel >= thresold) ? (voiceLevel - thresold) : 0;
-        logLevel = log2_approx(MIN(voiceLevel * 16, 32768u) + 1);
-        bars = barsList[logLevel];
-        barsOld = (barsOld - bars > 1) ? (barsOld - 1) : bars;
-
-        uint8_t *p_line = gFrameBuffer[line];
-        memset(p_line, 0, LCD_WIDTH);
-
-        DrawLevelBar(2, line, barsOld, 25);
-
-        if (gCurrentFunction == FUNCTION_TRANSMIT)
-            ST7565_BlitFullScreen();
-    }
-}
-#endif
-
-void DisplayRSSIBar(const bool now)
+void DisplayRSSIBar(const int16_t rssi, const uint8_t vfo_num, const uint8_t line, const uint8_t rssi_x)
 {
 #if defined(ENABLE_RSSI_BAR)
 

@@ -408,8 +408,8 @@ const char gSubMenu_SCRAMBLER[][7] =
 
     const char gSubMenu_SET_MET[][8] =
     {
-        "TINY",
-        "CLASSIC"
+        "CLASSIC",
+        "LOSEHU"
     };
 
     #ifdef ENABLE_FEAT_F4HWN_AUDIO
